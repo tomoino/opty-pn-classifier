@@ -51,35 +51,46 @@ def make_pn_dict():
             pn_dict[key] = {}
         pn_dict[key][(',').join(basic_form)] = 1 if line[1] == 'p' else - 1
 
-    print(pn_dict)
     pickle.dump(pn_dict, open('pn.pkl', 'wb'), protocol=2)
 
+# PN判定。リクエスト中の要素のPN値を足し合わせた値を返す。
 def calc_pn(basic_form):
-    # PN判定：単語をkeyにして、登録されてる単語列とPN値を取得する
-    # PN_DICT:key = 1文節目かつ助詞以外の単語、value = {単語列(,で接続):pn}
     pn_dict = pickle.load(open('pn.pkl', 'rb'))
     pn_values = [] # 文章内の各要素のPN判定の数値を格納
+    pns = [] # debug用
+
     while basic_form:
-        key = basic_form[0] # 先頭の単語をkeyにする
-        if key not in pn_dict:
-            pn_values.append(0)
-            basic_form.pop(0)
-            continue
-        
-        print(key, end="")
-        print(': ', end="")
-        print(pn_dict[key])
-        basic_form.pop(0)
-    # print(pn_dict)
-    return 1
+        pn_value = 0
+        del_num = 1  # リストから削除する件数
+        beginning = basic_form[0] # 先頭の単語をkeyにする
+
+        if beginning in pn_dict:
+            for index, word in enumerate(basic_form):
+                if word == "。" or word == "、":  #　文の句切れが来たら、中断する
+                    break
+                if index == 0:
+                    joined_basic_forms = beginning
+                else:
+                    joined_basic_forms += ',' + word
+                
+                if joined_basic_forms in pn_dict[beginning]:
+                    pn_value = pn_dict[beginning][joined_basic_forms]
+                    del_num = index + 1
+
+        pns.append(','.join(basic_form[0:del_num])+": "+str(pn_value))
+        pn_values.append(pn_value)
+        del basic_form[0:del_num]
+    
+    for v in pns:
+        print(v)
+
+    return sum(pn_values)
 
 def main():
-    request = "今日は楽しくて良い一日だった。ランチに行ったお店がとても美味しかった。"
+    request = "新型コロナウイルスが全国に感染を広げ、例えば、4月7日の時点で、東京都では感染者の累計が1,000人を超えるとともに、5日で2倍になるペースで感染者の増加が見られました。 また、感染経路が明らかにならない、いわゆる「孤発例」が増え、感染経路の"
     basic_form = convert_to_basic_form(request)
-    print(basic_form)
     pn = calc_pn(basic_form)
     print('PN = '+str(pn))
 
 if __name__ == "__main__":
-    # main()
-    make_pn_dict()
+    main()
