@@ -1,5 +1,45 @@
+import os
+import yaml
+import flask
 import MeCab
 import pickle
+
+
+# yamlの読み込み
+try:
+    # local
+    with open('./env.yaml') as f:
+        os.environ.update(yaml.load(f))
+except FileNotFoundError as e:
+    # Google Cloud Functions
+    pass
+
+# 環境変数
+FOO = os.getenv('FOO') # FIXME: サンプルです
+
+
+def optimistic_analysis(request):
+    """HTTP Cloud Function.
+    Args:
+        request (flask.Request): The request object.
+        <http://flask.pocoo.org/docs/1.0/api/#flask.Request>
+    Returns:
+        The response text, or any set of values that can be turned into a
+        Response object using `make_response`
+        <http://flask.pocoo.org/docs/1.0/api/#flask.Flask.make_response>.
+    """
+    request_json = request.get_json(silent=True)
+    targets = request_json['targets']
+    scores = analyze(targets)
+    return flask.jsonify({'scores': scores})
+
+def analyze(targets):
+    scores = []
+    for target in targets:
+        target_basic_formed = convert_to_basic_form(target)
+        pn = calc_pn(target_basic_formed)
+        scores.append(pn)
+    return scores
 
 def convert_to_basic_form(request):
     tagger = MeCab.Tagger()
@@ -8,14 +48,13 @@ def convert_to_basic_form(request):
     return basic_form
 
 def make_pn_dict():
-    tagger = MeCab.Tagger()
     pn_dict = {}
 
     # 用言ファイル読み込み
     path = 'pn.txt'
     with open(path) as f:
         pn_file = f.readlines()
-    
+
     # 辞書に格納
     for line in pn_file:
         line = line.replace('\n','').replace(' ','').split('\t')
@@ -29,7 +68,7 @@ def make_pn_dict():
         if key not in pn_dict:
             pn_dict[key] = {}
         pn_dict[key][(',').join(basic_form)] = 1 if 'ポジ' in line[0] else - 1
-        
+
     # 名詞ファイル読み込み
     noun_path = 'pn_noun.txt'
     with open(noun_path) as f:
@@ -72,7 +111,7 @@ def calc_pn(basic_form):
                     joined_basic_forms = beginning
                 else:
                     joined_basic_forms += ',' + word
-                
+
                 if joined_basic_forms in pn_dict[beginning]:
                     pn_value = pn_dict[beginning][joined_basic_forms]
                     del_num = index + 1
@@ -80,17 +119,8 @@ def calc_pn(basic_form):
         pns.append(','.join(basic_form[0:del_num])+": "+str(pn_value))
         pn_values.append(pn_value)
         del basic_form[0:del_num]
-    
-    for v in pns:
-        print(v)
+
+    # for v in pns:
+        # print(v)
 
     return sum(pn_values)
-
-def main():
-    request = "新型コロナウイルスが全国に感染を広げ、例えば、4月7日の時点で、東京都では感染者の累計が1,000人を超えるとともに、5日で2倍になるペースで感染者の増加が見られました。 また、感染経路が明らかにならない、いわゆる「孤発例」が増え、感染経路の"
-    basic_form = convert_to_basic_form(request)
-    pn = calc_pn(basic_form)
-    print('PN = '+str(pn))
-
-if __name__ == "__main__":
-    main()
