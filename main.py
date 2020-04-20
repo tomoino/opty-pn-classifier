@@ -20,13 +20,15 @@ def make_pn_dict():
     for line in pn_file:
         line = line.replace('\n','').replace(' ','').split('\t')
         basic_form = convert_to_basic_form(line[1])
-        # 基本形が取得できない行については無視
+        # 基本形が取得できない行と基本形が1文字になる行については無視
         if not basic_form:
+            continue
+        elif len(basic_form) == 1 and len(basic_form[0]) == 1:
             continue
         key = basic_form[0]
         if key not in pn_dict:
-            pn_dict[key] = []
-        pn_dict[key].append([(',').join(basic_form), 1 if 'ポジ' in line[0] else - 1])
+            pn_dict[key] = {}
+        pn_dict[key][(',').join(basic_form)] = 1 if 'ポジ' in line[0] else - 1
         
     # 名詞ファイル読み込み
     noun_path = 'pn_noun.txt'
@@ -39,27 +41,45 @@ def make_pn_dict():
         if line[1] == 'e': # ポジティブでもネガティブでもない行は無視
             continue
         basic_form = convert_to_basic_form(line[0])
-        # 基本形が取得できない行については無視
+        # 基本形が取得できない行と基本形が1文字になる行については無視
         if not basic_form:
+            continue
+        elif len(basic_form) == 1 and len(basic_form[0]) == 1:
             continue
         key = basic_form[0]
         if key not in pn_dict:
-            pn_dict[key] = []
-        pn_dict[key].append([(',').join(basic_form), 1 if line[1] == 'p' else - 1])
+            pn_dict[key] = {}
+        pn_dict[key][(',').join(basic_form)] = 1 if line[1] == 'p' else - 1
 
     print(pn_dict)
     pickle.dump(pn_dict, open('pn.pkl', 'wb'), protocol=2)
+
+def calc_pn(basic_form):
+    # PN判定：単語をkeyにして、登録されてる単語列とPN値を取得する
+    # PN_DICT:key = 1文節目かつ助詞以外の単語、value = {単語列(,で接続):pn}
+    pn_dict = pickle.load(open('pn.pkl', 'rb'))
+    pn_values = [] # 文章内の各要素のPN判定の数値を格納
+    while basic_form:
+        key = basic_form[0] # 先頭の単語をkeyにする
+        if key not in pn_dict:
+            pn_values.append(0)
+            basic_form.pop(0)
+            continue
+        
+        print(key, end="")
+        print(': ', end="")
+        print(pn_dict[key])
+        basic_form.pop(0)
+    # print(pn_dict)
+    return 1
 
 def main():
     request = "今日は楽しくて良い一日だった。ランチに行ったお店がとても美味しかった。"
     basic_form = convert_to_basic_form(request)
     print(basic_form)
-
-    # PN判定：単語をkeyにして、登録されてる単語列とPN値を取得する
-    # PN_DICT:key = 1文節目かつ助詞以外の単語、value = [[単語列(,で接続),pn]]
-    pn_dict = pickle.load(open('pn.pkl', 'rb'))
-    print(pn_dict)
+    pn = calc_pn(basic_form)
+    print('PN = '+str(pn))
 
 if __name__ == "__main__":
-    main()
-    # make_pn_dict()
+    # main()
+    make_pn_dict()
