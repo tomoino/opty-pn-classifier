@@ -15,5 +15,5 @@
 - デプロイ: `gcloud functions deploy optimistic_analysis --runtime python37 --trigger-http --allow-unauthenticated --memory=512MB --env-vars-file=./env.yaml`
 
 ## 改善点
-- FIXME: `楽しくない`がプラス判定になったりする
-- FIXME: ローカルで実行するとchromeがHTTPだよって怒る
+- TODO: ローカルで実行するとchromeがHTTPだよって怒る
+- TODO: 速度もうちょっと改善したい

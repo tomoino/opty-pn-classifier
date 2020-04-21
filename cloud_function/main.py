@@ -19,9 +19,6 @@ except FileNotFoundError as e:
 logger = getLogger(__name__)
 logger.setLevel(DEBUG)
 
-# 環境変数
-FOO = os.getenv('FOO') # FIXME: サンプルです
-
 # 定数
 HEADERS = {
     'Access-Control-Allow-Origin': '*',
