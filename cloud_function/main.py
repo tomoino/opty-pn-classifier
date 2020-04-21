@@ -110,11 +110,10 @@ def make_pn_dict():
 
     pickle.dump(pn_dict, open('pn.pkl', 'wb'), protocol=2)
 
-# PN判定。リクエスト中の要素のPN値を足し合わせた値を返す。
+# PN判定。リクエスト中の要素のPN値の平均を返す。
 def calc_pn(basic_form):
     pn_dict = pickle.load(open('pn.pkl', 'rb'))
     pn_values = [] # 文章内の各要素のPN判定の数値を格納
-    pns = [] # debug用
 
     while basic_form:
         pn_value = 0
@@ -130,15 +129,15 @@ def calc_pn(basic_form):
                 else:
                     joined_basic_forms += ',' + word
 
+                if word == "ない" and del_num == index: # ポジネガ反転が必要
+                    pn_value *= -1
+                    del_num = index + 1
+
                 if joined_basic_forms in pn_dict[beginning]:
                     pn_value = pn_dict[beginning][joined_basic_forms]
                     del_num = index + 1
 
-        pns.append(','.join(basic_form[0:del_num])+": "+str(pn_value))
         pn_values.append(pn_value)
         del basic_form[0:del_num]
-
-    # for v in pns:
-        # print(v)
 
     return sum(pn_values) / len(pn_values) if pn_values else 0
