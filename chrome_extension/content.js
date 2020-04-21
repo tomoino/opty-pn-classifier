@@ -18,7 +18,6 @@ function computeScoresAndChangeStyles(targetsList) {
     if (xhr.status === 200) {
       const scoresList = JSON.parse(xhr.responseText);
       scoresList.forEach((scores, i) => {
-        console.log(targetsList[i]);
         changeStyles(targetsList[i]['elms'], scores);
       });
     }
@@ -60,9 +59,6 @@ function changeStyles(elms, scores) {
 function getElms(className) {
   return Array.prototype.filter.call(document.getElementsByClassName(className), function(e) {
     if (e.className == className) {
-      // 最初はぼかしとく
-      // const style = `transition: filter 6s; filter: blur(50px);`;
-      // e.setAttribute("style", style);
       return e;
     }
   });
