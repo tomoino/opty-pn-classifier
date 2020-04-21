@@ -1,3 +1,4 @@
+from logging import getLogger, DEBUG
 import os
 import yaml
 import flask
@@ -14,8 +15,19 @@ except FileNotFoundError as e:
     # Google Cloud Functions
     pass
 
+# ログの設定
+logger = getLogger(__name__)
+logger.setLevel(DEBUG)
+
 # 環境変数
 FOO = os.getenv('FOO') # FIXME: サンプルです
+
+# 定数
+HEADERS = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST',
+    'Access-Control-Allow-Headers': 'Content-Type'
+}
 
 
 def optimistic_analysis(request):
@@ -28,16 +40,22 @@ def optimistic_analysis(request):
         Response object using `make_response`
         <http://flask.pocoo.org/docs/1.0/api/#flask.Flask.make_response>.
     """
-    request_json = request.get_json(silent=True)
-    targets = request_json['targets']
-    scores = analyze(targets)
-    return flask.jsonify({'scores': scores})
+    try:
+        request_json = request.get_json()
+        scoresList = []
+        for targets in request_json:
+            texts = targets['texts']
+            scoresList.append(analyze(texts))
+        return (flask.jsonify(scoresList), 200, HEADERS)
+    except Exception as e:
+        logger.error(e)
+        return ('', 200, HEADERS)
 
-def analyze(targets):
+def analyze(texts):
     scores = []
-    for target in targets:
-        target_basic_formed = convert_to_basic_form(target)
-        pn = calc_pn(target_basic_formed)
+    for text in texts:
+        text_basic_formed = convert_to_basic_form(text)
+        pn = calc_pn(text_basic_formed)
         scores.append(pn)
     return scores
 
@@ -123,4 +141,4 @@ def calc_pn(basic_form):
     # for v in pns:
         # print(v)
 
-    return sum(pn_values)
+    return sum(pn_values) / len(pn_values) if pn_values else 0
