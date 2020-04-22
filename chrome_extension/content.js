@@ -46,8 +46,9 @@ function changeStyles(elms, scores) {
   for (let i = 0; i < scores.length; i++) {
     const elm = elms[i], score = scores[i];
     if (score >= 0) {
-      const style = `transition: filter 1s; filter: blur(0);`;
-      elm.setAttribute("style", style);
+      // TODO: 明るいサイトは明るくしたらいいんじゃない？
+      // const style = `transition: filter 1s; filter: blur(0);`;
+      // elm.setAttribute("style", style);
     } else {
       const style = `transition: filter 1s; filter: blur(${-score * 50}px);`;
       elm.setAttribute("style", style);
